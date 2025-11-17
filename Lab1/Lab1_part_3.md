@@ -289,7 +289,7 @@
 add,commit, and push the file to the git repo
 
 ```bash
-git add.
+git add .
 git commit -m "edited the html file"
 git push
 ```
