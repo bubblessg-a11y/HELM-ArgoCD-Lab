@@ -2,7 +2,6 @@ ReplicaNumber: 3
 containers:
        containerPort: 8080
        image: 'quay.io/bubblessg/hello-world:v2'
-       tag: 'base'
-     
-     service:
+       tag: 'base'     
+service:
        servicePort: 8080
