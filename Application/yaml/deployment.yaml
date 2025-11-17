@@ -1,35 +1,48 @@
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-# set your lab user name
+  # set your lab user name
   name: bubblessg-hello-world
 spec:
   replicas: 3
   selector:
     matchLabels:
-# set your lab user name
+      # set your lab user name
       app: bubblessg-hello-world
   template:
     metadata:
       labels:
-# set your lab user name
+        # set your lab user name
         app: bubblessg-hello-world
     spec:
+      volumes:
+        - name: index-html
+          configMap:
+            name: '{{ .Chart.Name }}-html'
+            defaultMode: 420
+
       containers:
-        - resources: {}
+        - name: hello-world
+          image: 'quay.io/bubblessg/hello-world:chart_v1' # update with the image you build in part 1
+          imagePullPolicy: IfNotPresent
+          resources: {}
           terminationMessagePath: /dev/termination-log
-          name: hello-world
+
           ports:
             - containerPort: 8080
               protocol: TCP
-          imagePullPolicy: IfNotPresent
-# update with the image you build in part 1
-          image: 'quay.io/bubblessg/hello-world:v2'
+
+          volumeMounts:
+            - name: index-html
+              mountPath: /tmp/html  # this will mount the index.html file to the application location
+
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
+
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 25%
       maxSurge: 25%
+
   revisionHistoryLimit: 10
