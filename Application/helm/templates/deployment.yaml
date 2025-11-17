@@ -2,39 +2,61 @@ kind: Deployment
 apiVersion: apps/v1
 metadata:
   # set your lab user name
-  name: bubblessg-hello-world
+  name: {{ .Chart.Name }}
 spec:
-  replicas: 3
+  replicas: {{ .Values.ReplicaNumber }}
   selector:
     matchLabels:
       # set your lab user name
-      app: bubblessg-hello-world
+      app: {{ .Chart.Name }}
   template:
     metadata:
       labels:
         # set your lab user name
-        app: bubblessg-hello-world
+        app: {{ .Chart.Name }}
     spec:
       volumes:
         - name: index-html
           configMap:
-            name: '{{ .Chart.Name }}-html'
+            name: {{ .Chart.Name }}-html
             defaultMode: 420
-
       containers:
-        - name: hello-world
-          image: 'quay.io/bubblessg/hello-world:chart_v1' # update with the image you build in part 1
+        - name: {{ .Chart.Name }}
+          image: {{ .Values.containers.image }}:{{ .Values.containers.tag }}
           imagePullPolicy: IfNotPresent
-          resources: {}
-          terminationMessagePath: /dev/termination-log
-
+          env:
+            - name: PORT
+              value: {{ .Values.containers.containerPort | quote }}
           ports:
-            - containerPort: 8080
+            - containerPort: {{ .Values.containers.containerPort }}
               protocol: TCP
-
           volumeMounts:
             - name: index-html
               mountPath: /tmp/html  # this will mount the index.html file to the application location
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+
+          livenessProbe:
+            httpGet:
+              path: /health/liveliness
+              port: {{ .Values.containers.containerPort }}
+              scheme: HTTP
+            initialDelaySeconds: 1
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /health/readiness  # this checks the application URL path
+              port: {{ .Values.containers.containerPort }} # Application listening port
+              scheme: HTTP
+            initialDelaySeconds: 1  # wait time before testing
+            timeoutSeconds: 1       # timeout for each probe
+            periodSeconds: 10       # interval between checks
+            successThreshold: 1
+            failureThreshold: 3
 
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
